@@ -26,7 +26,6 @@ const userSchema = mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Please provide your password"],
       minLength: [
         6,
         "Plase make sure your password is atleast 6 characters long",
@@ -54,6 +53,7 @@ userSchema.pre("save", async function (next) {
     next(error);
   }
 });
+
 const UserModel =
   mongoose.models.UserModel || mongoose.model("UserModel", userSchema);
 

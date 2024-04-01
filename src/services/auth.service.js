@@ -8,7 +8,7 @@ const { DEFAULT_PICTURE, DEFAULT_STATUS } = process.env;
 
 export const createUser = async (userData) => {
   const { name, email, picture, status, password } = userData;
-
+  console.log("here");
   //check if fields are empty
   if (!name || !email || !password) {
     throw createHttpError.BadRequest("Please fill all fields.");
@@ -86,4 +86,34 @@ export const signUser = async (email, password) => {
   if (!passwordMatches) throw createHttpError.NotFound("Invalid credentials.");
 
   return user;
+};
+
+export const updateUser = async (userData) => {
+  const user = await UserModel.findOne({
+    email: userData.email.toLowerCase(),
+  }).lean();
+
+  let pass = userData.password ? userData.password : user.password;
+
+  const salt = await bcrypt.genSalt(12);
+  const hashedPassword = await bcrypt.hash(pass, salt);
+  pass = hashedPassword;
+
+  const updatedUser = {
+    $set: {
+      name: userData.name ? userData.name : user.name,
+      email: userData.email ? userData.email : user.email,
+      picture: userData.picture ? userData.picture : user.picture,
+      status: userData.status ? userData.status : user.status,
+      password: pass,
+    },
+  };
+
+  const userR = await UserModel.findOneAndUpdate(
+    { _id: user._id },
+    updatedUser,
+    { new: true }
+  );
+
+  return userR;
 };
