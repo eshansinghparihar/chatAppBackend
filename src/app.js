@@ -20,10 +20,6 @@ const OAuth2Strategy = Strategy;
 //dotEnv config
 dotenv.config();
 
-const clientid = process.env.GOOGLE_CLIENTID;
-
-const clientsecret = process.env.GOOGLE_CLIENTSECRET;
-
 //create express app
 const app = express();
 

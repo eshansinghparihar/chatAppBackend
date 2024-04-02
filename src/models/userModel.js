@@ -4,6 +4,10 @@ import bcrypt from "bcrypt";
 
 const userSchema = mongoose.Schema(
   {
+    googleSignIn: {
+      type: Boolean,
+      default: false,
+    },
     name: {
       type: String,
       required: [true, "Please provide your name"],
@@ -22,7 +26,7 @@ const userSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      default: "Hey there ! I am using whatsapp",
+      default: "Hey there ! I am using chatApp",
     },
     password: {
       type: String,

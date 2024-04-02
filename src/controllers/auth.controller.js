@@ -12,12 +12,6 @@ export const register = async (req, res, next) => {
     const { googleAccessToken } = req.body;
     console.log(googleAccessToken.googleAccessToken);
 
-    /* try{
-
-    }catch(err){
-
-    }
-    const resp = await  */
     axios
       .get("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: {
@@ -36,6 +30,7 @@ export const register = async (req, res, next) => {
         }
 
         const newUser = await createUser({
+          googleSignIn: true,
           name,
           email,
           picture: picture || DEFAULT_PICTURE,

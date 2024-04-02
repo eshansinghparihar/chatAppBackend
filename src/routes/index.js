@@ -5,6 +5,9 @@ import ConversationRoutes from "./conversation.route.js";
 import MessageRoutes from "./message.route.js";
 const router = express.Router();
 
+router.route("/serviceHealth").get((req, res) => {
+  res.status(200).json({ message: "Service Up And Running" });
+});
 router.use("/auth", authRoutes);
 router.use("/user", userROutes);
 router.use("/conversation", ConversationRoutes);

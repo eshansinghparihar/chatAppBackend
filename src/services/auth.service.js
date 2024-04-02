@@ -7,8 +7,8 @@ import { UserModel } from "../models/index.js";
 const { DEFAULT_PICTURE, DEFAULT_STATUS } = process.env;
 
 export const createUser = async (userData) => {
-  const { name, email, picture, status, password } = userData;
-  console.log("here");
+  const { googleSignIn, name, email, picture, status, password } = userData;
+
   //check if fields are empty
   if (!name || !email || !password) {
     throw createHttpError.BadRequest("Please fill all fields.");
@@ -64,6 +64,7 @@ export const createUser = async (userData) => {
 
   //adding user to databse
   const user = await new UserModel({
+    googleSignIn,
     name,
     email,
     picture: picture || DEFAULT_PICTURE,
@@ -92,8 +93,17 @@ export const updateUser = async (userData) => {
   const user = await UserModel.findOne({
     email: userData.email.toLowerCase(),
   }).lean();
+  console.log(userData.currentPassword, user.password);
+  let passwordMatches = await bcrypt.compare(
+    userData.currentPassword,
+    user.password
+  );
 
-  let pass = userData.password ? userData.password : user.password;
+  console.log(passwordMatches);
+
+  if (!passwordMatches) throw createHttpError.NotFound("Incorrect Password.");
+
+  let pass = userData.newPassword ? userData.newPassword : user.password;
 
   const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(pass, salt);
