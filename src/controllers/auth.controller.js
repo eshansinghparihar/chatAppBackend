@@ -5,7 +5,7 @@ import { findUser } from "../services/user.service.js";
 import axios from "axios";
 import { UserModel } from "../models/index.js";
 
-const { DEFAULT_PICTURE, DEFAULT_STATUS } = process.env;
+const { DEFAULT_PICTURE, DEFAULT_STATUS, DEFAULT_PASSWORD } = process.env;
 
 export const register = async (req, res, next) => {
   if (req.body.googleAccessToken) {
@@ -35,10 +35,8 @@ export const register = async (req, res, next) => {
           email,
           picture: picture || DEFAULT_PICTURE,
           status: DEFAULT_STATUS,
-          password: "DEFAULT@123",
+          password: DEFAULT_PASSWORD,
         });
-
-        console.log(newUser);
 
         const access_token = await generateToken(
           { userId: newUser._id },
