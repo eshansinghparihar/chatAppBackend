@@ -90,24 +90,26 @@ export const signUser = async (email, password) => {
 };
 
 export const updateUser = async (userData) => {
+  let pass = "";
   const user = await UserModel.findOne({
     email: userData.email.toLowerCase(),
   }).lean();
-  console.log(userData.currentPassword, user.password);
-  let passwordMatches = await bcrypt.compare(
-    userData.currentPassword,
-    user.password
-  );
+  if (user.googleSignIn) {
+    pass = user.password;
+  } else {
+    let passwordMatches = await bcrypt.compare(
+      userData.currentPassword,
+      user.password
+    );
 
-  console.log(passwordMatches);
+    if (!passwordMatches) throw createHttpError.NotFound("Incorrect Password.");
 
-  if (!passwordMatches) throw createHttpError.NotFound("Incorrect Password.");
+    pass = userData.newPassword ? userData.newPassword : user.password;
 
-  let pass = userData.newPassword ? userData.newPassword : user.password;
-
-  const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(pass, salt);
-  pass = hashedPassword;
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(pass, salt);
+    pass = hashedPassword;
+  }
 
   const updatedUser = {
     $set: {

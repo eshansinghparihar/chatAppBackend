@@ -58,6 +58,7 @@ export const register = async (req, res, next) => {
         res.json({
           message: "register success.",
           user: {
+            googleSignIn: newUser.googleSignIn,
             _id: newUser._id,
             name: newUser.name,
             email: newUser.email,
@@ -101,6 +102,7 @@ export const register = async (req, res, next) => {
       res.json({
         message: "register success.",
         user: {
+          googleSignIn: newUser.googleSignIn,
           _id: newUser._id,
           name: newUser.name,
           email: newUser.email,
@@ -138,6 +140,7 @@ export const update = async (req, res, next) => {
     res.json({
       message: "update success.",
       user: {
+        googleSignIn: user.googleSignIn,
         _id: user._id,
         name: user.name,
         email: user.email,
@@ -154,7 +157,7 @@ export const login = async (req, res, next) => {
   if (req.body.googleAccessToken) {
     // gogole-auth
     const { googleAccessToken } = req.body;
-    console.log(googleAccessToken.googleAccessToken);
+
     axios
       .get("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: {
@@ -188,6 +191,7 @@ export const login = async (req, res, next) => {
         res.json({
           message: "login success.",
           user: {
+            googleSignIn: existingUser.googleSignIn,
             _id: existingUser._id,
             name: existingUser.name,
             email: existingUser.email,
@@ -225,6 +229,7 @@ export const login = async (req, res, next) => {
       res.json({
         message: "register success.",
         user: {
+          googleSignIn: user.googleSignIn,
           _id: user._id,
           name: user.name,
           email: user.email,
