@@ -309,6 +309,7 @@ export const sendEmail = async (req, res, next) => {
     let mailOptions = null;
     let otp = null;
 
+    //send message to emailId (if user is offline) feature
     if (sender) {
       mailOptions = {
         from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
@@ -334,7 +335,9 @@ export const sendEmail = async (req, res, next) => {
               </body>
               </html>`,
       };
-    } else {
+    } 
+    //send OTP for forgot password feature
+    else {
       const existingUser = await UserModel.findOne({
         email: email.toLowerCase(),
       }).lean();
@@ -378,25 +381,25 @@ export const sendEmail = async (req, res, next) => {
         };
       }
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error(error);
-          return res.status(500).json({
-            success: false,
-            message: "Error sending email",
-          });
-        }
-
-        console.log("Email sent: " + info.response);
-        return res.status(200).json({
-          success: true,
-          message: "Email sent successfully",
-          email: email,
-          ...(otp ? { otp: otp } : {}), // Include 'otp' if it's present
-          ...(sender && message ? { sender: sender, message: message } : {}), // Include 'sender' and 'message' if they are present
-        });
-      });
     }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({
+          success: false,
+          message: "Error sending email",
+        });
+      }
+
+      console.log("Email sent: " + info.response);
+      return res.status(200).json({
+        success: true,
+        message: "Email sent successfully",
+        email: email,
+        ...(otp ? { otp: otp } : {}), // Include 'otp' if it's present
+        ...(sender && message ? { sender: sender, message: message } : {}), // Include 'sender' and 'message' if they are present
+      });
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
