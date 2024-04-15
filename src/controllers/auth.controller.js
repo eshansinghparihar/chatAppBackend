@@ -1,9 +1,14 @@
 import createHttpError from "http-errors";
-import { createUser, signUser, updateUser } from "../services/auth.service.js";
+import {
+  createUser,
+  signUser,
+  updateUser,
+} from "../services/auth.service.js";
 import { generateToken, verifyToken } from "../services/token.service.js";
 import { findUser } from "../services/user.service.js";
 import axios from "axios";
 import { UserModel } from "../models/index.js";
+import nodemailer from "nodemailer";
 
 const { DEFAULT_PICTURE, DEFAULT_STATUS, DEFAULT_PASSWORD } = process.env;
 
@@ -26,7 +31,7 @@ export const register = async (req, res, next) => {
         const existingUser = await UserModel.findOne({ email });
         if (existingUser) {
           console.log("here");
-          return res.status(400).json({ message: "User already exist!" });
+          return res.status(400).json({ message: "User already exists!" });
         }
 
         const newUser = await createUser({
@@ -153,7 +158,9 @@ export const update = async (req, res, next) => {
     next(err);
   }
 };
+
 export const login = async (req, res, next) => {
+  //If the user's account is linked to Google credentials
   if (req.body.googleAccessToken) {
     // gogole-auth
     const { googleAccessToken } = req.body;
@@ -169,7 +176,7 @@ export const login = async (req, res, next) => {
         const existingUser = await UserModel.findOne({ email });
 
         if (!existingUser)
-          return res.status(404).json({ message: "User don't exist!" });
+          return res.status(404).json({ message: "User doesn't exist!" });
 
         const access_token = await generateToken(
           { userId: existingUser._id },
@@ -243,6 +250,7 @@ export const login = async (req, res, next) => {
     }
   }
 };
+
 export const logout = async (req, res, next) => {
   try {
     res.clearCookie("refreshtoken", { path: "/api/v1/auth/refreshtoken" });
@@ -253,6 +261,7 @@ export const logout = async (req, res, next) => {
     next(error);
   }
 };
+
 export const refreshToken = async (req, res, next) => {
   try {
     const refresh_token = req.cookies.refreshtoken;
@@ -279,5 +288,119 @@ export const refreshToken = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const sendEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const { message } = req.body;
+    const { sender } = req.body;
+
+    // Send mail to the given user's email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASSWORD,
+      },
+    });
+    //subject. message, email, from?
+    let mailOptions = null;
+    let otp = null;
+
+    if (sender) {
+      mailOptions = {
+        from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
+        to: email,
+        subject: "A new message notification",
+        html: `<!DOCTYPE html>
+              <html lang="en" >
+              <head>
+              <meta charset="UTF-8">
+              </head>
+              <body>
+                <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+                  <div style="margin:50px auto;width:70%;padding:20px 0; text-align: center;">
+                    <div style="border-bottom:1px solid #eee">
+                      <a href="" style="font-size:1.8em;color: #00466A;text-decoration:none;font-weight:600">Greetings of the day!</a>
+                    </div>
+                    <p style="font-size:1.4em">You have receieved following message from ${sender}:</p>
+                    <h2 style="margin: 0 auto;width: max-content;padding: 0 10px;color: #000;border-radius: 4px;">"${message}"</h2>
+                    <p style="font-size:1.2em;">Thank you!</p>
+                    <hr style="border:none;border-top:1px solid #eee" />
+                  </div>
+                </div>
+              </body>
+              </html>`,
+      };
+    } else {
+      const existingUser = await UserModel.findOne({
+        email: email.toLowerCase(),
+      }).lean();
+
+      if (!existingUser)
+        return res.status(404).json({ message: "User doesn't exist!" });
+      //If the user's account is linked to Google credentials, no need of password reset
+      else if (existingUser.googleSignIn) {
+        return res.status(200).json({
+          email: existingUser.email,
+          message:
+            "Your account is linked to Google credentials, so there's no need to reset your password. Simply log in using your Google account for seamless access.",
+        });
+      } else {
+        //Generate a random OTP(4-digit)
+        otp = Math.floor(Math.random() * 9000 + 1000);
+
+        mailOptions = {
+          from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
+          to: email,
+          subject: "Reset your password",
+          html: `<!DOCTYPE html>
+                <html lang="en" >
+                <head>
+                <meta charset="UTF-8">
+                </head>
+                <body>
+                  <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+                    <div style="margin:50px auto;width:70%;padding:20px 0; text-align: center;">
+                      <div style="border-bottom:1px solid #eee">
+                        <a href="" style="font-size:1.8em;color: #00466A;text-decoration:none;font-weight:600">Greetings of the day!</a>
+                      </div>
+                      <p style="font-size:1.4em">Use the following OTP to complete your Password Recovery Procedure</p>
+                      <h2 style="background: #00466A;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${otp}</h2>
+                      <p style="font-size:1.2em;">Thank you!</p>
+                      <hr style="border:none;border-top:1px solid #eee" />
+                    </div>
+                  </div>
+                </body>
+                </html>`,
+        };
+      }
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({
+            success: false,
+            message: "Error sending email",
+          });
+        }
+
+        console.log("Email sent: " + info.response);
+        return res.status(200).json({
+          success: true,
+          message: "Email sent successfully",
+          email: email,
+          ...(otp ? { otp: otp } : {}), // Include 'otp' if it's present
+          ...(sender && message ? { sender: sender, message: message } : {}), // Include 'sender' and 'message' if they are present
+        });
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

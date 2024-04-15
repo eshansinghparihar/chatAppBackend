@@ -40,7 +40,7 @@ export const createUser = async (userData) => {
     );
   }
 
-  //check if user already exist
+  //check if user already exists
   const checkDb = await UserModel.findOne({ email });
   if (checkDb) {
     throw createHttpError.Conflict(
