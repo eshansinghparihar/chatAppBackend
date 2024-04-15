@@ -1,5 +1,9 @@
 import createHttpError from "http-errors";
-import { createUser, signUser, updateUser } from "../services/auth.service.js";
+import {
+  createUser,
+  signUser,
+  updateUser,
+} from "../services/auth.service.js";
 import { generateToken, verifyToken } from "../services/token.service.js";
 import { findUser } from "../services/user.service.js";
 import axios from "axios";
@@ -27,7 +31,7 @@ export const register = async (req, res, next) => {
         const existingUser = await UserModel.findOne({ email });
         if (existingUser) {
           console.log("here");
-          return res.status(400).json({ message: "User already exist!" });
+          return res.status(400).json({ message: "User already exists!" });
         }
 
         const newUser = await createUser({
@@ -156,6 +160,7 @@ export const update = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
+  //If the user's account is linked to Google credentials
   if (req.body.googleAccessToken) {
     // gogole-auth
     const { googleAccessToken } = req.body;
@@ -171,7 +176,7 @@ export const login = async (req, res, next) => {
         const existingUser = await UserModel.findOne({ email });
 
         if (!existingUser)
-          return res.status(404).json({ message: "User don't exist!" });
+          return res.status(404).json({ message: "User doesn't exist!" });
 
         const access_token = await generateToken(
           { userId: existingUser._id },
@@ -303,7 +308,8 @@ export const sendEmail = async (req, res, next) => {
     //subject. message, email, from?
     let mailOptions = null;
     let otp = null;
-    
+
+    //send message to emailId (if user is offline) feature
     if (sender) {
       mailOptions = {
         from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
@@ -329,15 +335,31 @@ export const sendEmail = async (req, res, next) => {
               </body>
               </html>`,
       };
-    } else {
-      //Generate a random OTP(4-digit)
-      otp = Math.floor(Math.random() * 9000 + 1000);
+    } 
+    //send OTP for forgot password feature
+    else {
+      const existingUser = await UserModel.findOne({
+        email: email.toLowerCase(),
+      }).lean();
 
-      mailOptions = {
-        from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
-        to: email,
-        subject: "Reset your password",
-        html: `<!DOCTYPE html>
+      if (!existingUser)
+        return res.status(404).json({ message: "User doesn't exist!" });
+      //If the user's account is linked to Google credentials, no need of password reset
+      else if (existingUser.googleSignIn) {
+        return res.status(200).json({
+          email: existingUser.email,
+          message:
+            "Your account is linked to Google credentials, so there's no need to reset your password. Simply log in using your Google account for seamless access.",
+        });
+      } else {
+        //Generate a random OTP(4-digit)
+        otp = Math.floor(Math.random() * 9000 + 1000);
+
+        mailOptions = {
+          from: `Apispocc Team-7 ${process.env.GMAIL_USER}`,
+          to: email,
+          subject: "Reset your password",
+          html: `<!DOCTYPE html>
                 <html lang="en" >
                 <head>
                 <meta charset="UTF-8">
@@ -356,9 +378,10 @@ export const sendEmail = async (req, res, next) => {
                   </div>
                 </body>
                 </html>`,
-      };
-    }
+        };
+      }
 
+    }
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error(error);
