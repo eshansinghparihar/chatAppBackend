@@ -27,7 +27,9 @@ export const doesUserExist = async (req, res, next) => {
       logger.error("Please add an email query first");
       throw createHttpError.BadRequest("Oops...Something went wrong!");
     }
-    const users = await UserModel.find({ keyword })
+    const users = await UserModel.findOne({
+      email: keyword.toLowerCase(),
+    }).lean();
     res.status(200).json(users);
   } catch (error) {
     next(error);
