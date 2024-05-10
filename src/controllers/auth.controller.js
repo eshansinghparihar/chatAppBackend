@@ -3,6 +3,7 @@ import {
   createUser,
   signUser,
   updateUser,
+  updateUserPassword
 } from "../services/auth.service.js";
 import { generateToken, verifyToken } from "../services/token.service.js";
 import { findUser } from "../services/user.service.js";
@@ -153,6 +154,18 @@ export const update = async (req, res, next) => {
         status: user.status,
         token: access_token,
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updatePassword = async (req, res, next) => {
+  try {
+    await updateUserPassword(req.body);
+    
+    res.json({
+      message: "update success.",
     });
   } catch (err) {
     next(err);

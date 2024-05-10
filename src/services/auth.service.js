@@ -129,3 +129,29 @@ export const updateUser = async (userData) => {
 
   return userR;
 };
+
+export const updateUserPassword = async (userData) => {
+  let pass = "";
+  const user = await UserModel.findOne({
+    email: userData.email.toLowerCase(),
+  }).lean();
+
+    pass= userData.password;
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(pass, salt);
+    pass = hashedPassword;
+
+  const updatedUser = {
+    $set: {
+      password: pass,
+    },
+  };
+
+  const userR = await UserModel.findOneAndUpdate(
+    { _id: user._id },
+    updatedUser,
+    { new: true }
+  );
+
+  return userR;
+};

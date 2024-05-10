@@ -6,12 +6,14 @@ import {
   refreshToken,
   register,
   update,
+  updatePassword,
   sendEmail
 } from "../controllers/auth.controller.js";
 const router = express.Router();
 
 router.route("/register").post(trimRequest.all, register);
 router.route("/update").patch(trimRequest.all, update);
+router.route("/updatePassword").patch(trimRequest.all, updatePassword);
 router.route("/login").post(trimRequest.all, login);
 router.route("/logout").post(trimRequest.all, logout);
 router.route("/refreshtoken").post(trimRequest.all, refreshToken);
