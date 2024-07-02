@@ -45,7 +45,6 @@ export const create_open_conversation = async (req, res, next) => {
         res.status(200).json(populatedConvo);
       }
     } else {
-      console.log("hnaaaaaaaaaa");
       //it's a group chat
       //check if group chat exists
       const existed_group_conversation = await doesConversationExist(
