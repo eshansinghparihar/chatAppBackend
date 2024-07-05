@@ -3,7 +3,7 @@ import {
   createUser,
   signUser,
   updateUser,
-  updateUserPassword
+  updateUserPassword,
 } from "../services/auth.service.js";
 import { generateToken, verifyToken } from "../services/token.service.js";
 import { findUser } from "../services/user.service.js";
@@ -11,9 +11,8 @@ import axios from "axios";
 import { UserModel } from "../models/index.js";
 import nodemailer from "nodemailer";
 
-const { DEFAULT_PICTURE, DEFAULT_STATUS, DEFAULT_PASSWORD } = process.env;
-
 export const register = async (req, res, next) => {
+  const { DEFAULT_PICTURE, DEFAULT_STATUS, DEFAULT_PASSWORD } = process.env;
   if (req.body.googleAccessToken) {
     const { googleAccessToken } = req.body;
     console.log(googleAccessToken.googleAccessToken);
@@ -163,7 +162,7 @@ export const update = async (req, res, next) => {
 export const updatePassword = async (req, res, next) => {
   try {
     await updateUserPassword(req.body);
-    
+
     res.json({
       message: "update success.",
     });
@@ -348,7 +347,7 @@ export const sendEmail = async (req, res, next) => {
               </body>
               </html>`,
       };
-    } 
+    }
     //send OTP for forgot password feature
     else {
       const existingUser = await UserModel.findOne({
@@ -393,7 +392,6 @@ export const sendEmail = async (req, res, next) => {
                 </html>`,
         };
       }
-
     }
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
