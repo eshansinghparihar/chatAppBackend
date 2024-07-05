@@ -4,6 +4,8 @@ import {
   createMessage,
   getConvoMessages,
   populateMessage,
+  encryptMessage,
+  decryptMessage
 } from "../services/message.service.js";
 
 export const sendMessage = async (req, res, next) => {
@@ -20,14 +22,24 @@ export const sendMessage = async (req, res, next) => {
       conversation: convo_id,
       files: files || [],
     };
+
+    let encryptedMessage = await encryptMessage(msgData.message);
+    msgData.message=encryptedMessage.content;
+    msgData.iv=encryptedMessage.iv;
+
     let newMessage = await createMessage(msgData);
     let populatedMessage = await populateMessage(newMessage._id);
+
+    // Decrypt the message after populating
+    populatedMessage.message = await decryptMessage({ iv: populatedMessage.iv, content: populatedMessage.message });
+
     await updateLatestMessage(convo_id, newMessage);
     res.json(populatedMessage);
   } catch (error) {
     next(error);
   }
 };
+
 export const getMessages = async (req, res, next) => {
   try {
     const convo_id = req.params.convo_id;
@@ -36,6 +48,11 @@ export const getMessages = async (req, res, next) => {
       res.sendStatus(400);
     }
     const messages = await getConvoMessages(convo_id);
+    for (let msg of messages) {
+      if (msg.message && msg.iv) {
+        msg.message = await decryptMessage({ iv: msg.iv, content: msg.message });
+      }
+    }
     res.json(messages);
   } catch (error) {
     next(error);

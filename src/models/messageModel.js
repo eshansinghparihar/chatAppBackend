@@ -17,6 +17,9 @@ const messageSchema = mongoose.Schema(
       ref: "ConversationModel",
     },
     files: [],
+    iv :{
+      type: String
+    }
   },
   {
     collection: "messages",

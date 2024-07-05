@@ -1,6 +1,8 @@
 import createHttpError from "http-errors";
 import { ConversationModel, UserModel } from "../models/index.js";
-
+import {
+  decryptMessage
+} from "./message.service.js";
 export const doesConversationExist = async (
   sender_id,
   receiver_id,
@@ -65,6 +67,7 @@ export const populateConversation = async (
     throw createHttpError.BadRequest("Oops...Something went wrong !");
   return populatedConvo;
 };
+
 export const getUserConversations = async (user_id) => {
   let conversations;
   await ConversationModel.find({
@@ -79,6 +82,16 @@ export const getUserConversations = async (user_id) => {
         path: "latestMessage.sender",
         select: "name email picture status",
       });
+      // Decrypt the latest message in each conversation
+      for (let conversation of results) {
+        if (conversation.latestMessage && conversation.latestMessage.message && conversation.latestMessage.iv) {
+          conversation.latestMessage.message = await decryptMessage({
+            iv: conversation.latestMessage.iv,
+            content: conversation.latestMessage.message
+          });
+        }
+      }
+
       conversations = results;
     })
     .catch((err) => {
