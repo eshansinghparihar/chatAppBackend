@@ -97,18 +97,18 @@ export const updateUser = async (userData) => {
   if (user.googleSignIn) {
     pass = user.password;
   } else {
-    let passwordMatches = await bcrypt.compare(
-      userData.currentPassword,
-      user.password
-    );
-
-    if (!passwordMatches) throw createHttpError.NotFound("Incorrect Password.");
-
-    pass = userData.newPassword ? userData.newPassword : user.password;
-
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(pass, salt);
-    pass = hashedPassword;
+    if (userData.currentPassword) {
+      let passwordMatches = await bcrypt.compare(
+        userData.currentPassword,
+        user.password
+      );
+      if (!passwordMatches)
+        throw createHttpError.NotFound("Incorrect Password.");
+      pass = userData.newPassword ? userData.newPassword : user.password;
+      const salt = await bcrypt.genSalt(12);
+      const hashedPassword = await bcrypt.hash(pass, salt);
+      pass = hashedPassword;
+    }
   }
 
   const updatedUser = {
@@ -136,10 +136,10 @@ export const updateUserPassword = async (userData) => {
     email: userData.email.toLowerCase(),
   }).lean();
 
-    pass= userData.password;
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(pass, salt);
-    pass = hashedPassword;
+  pass = userData.password;
+  const salt = await bcrypt.genSalt(12);
+  const hashedPassword = await bcrypt.hash(pass, salt);
+  pass = hashedPassword;
 
   const updatedUser = {
     $set: {
